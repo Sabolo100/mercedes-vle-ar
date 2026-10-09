@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="hu">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#000000" />
+  <title>VLE AR élmény</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <script type="importmap">
+    { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js" } }
+  </script>
+</head>
+<body>
+  <video id="cam" playsinline muted autoplay></video>
+  <canvas id="gl"></canvas>
+  <iframe id="yt" hidden allow="autoplay; encrypted-media; gyroscope; accelerometer; fullscreen" allowfullscreen></iframe>
+
+  <div id="ui">
+    <!-- 1. Nyelvválasztó (ez a tap kéri el a kamera- és mozgásérzékelő-engedélyt) -->
+    <section id="splash" class="screen active">
+      <div class="brand">
+        <div class="brand-name">Mercedes-Benz</div>
+      </div>
+      <h1 class="hero">VLE</h1>
+      <p class="tagline">AR experience</p>
+      <p class="lang-prompt">Válassz nyelvet · Choose your language</p>
+      <div class="lang-row">
+        <button class="btn btn-ghost" data-lang="hu">Magyar</button>
+        <button class="btn btn-ghost" data-lang="en">English</button>
+      </div>
+    </section>
+
+    <!-- 2. Élményválasztó -->
+    <section id="modes" class="screen">
+      <h2 data-t="modeTitle"></h2>
+      <button class="mode" data-mode="journey">
+        <span class="mode-icon">360°</span>
+        <span class="mode-text"><strong data-t="modeJourney"></strong><small data-t="modeJourneySub"></small></span>
+      </button>
+      <button class="mode" data-mode="config">
+        <span class="mode-icon">AR</span>
+        <span class="mode-text"><strong data-t="modeConfig"></strong><small data-t="modeConfigSub"></small></span>
+      </button>
+    </section>
+
+    <!-- Élmény közbeni felület -->
+    <header id="hud" hidden>
+      <button class="icon-btn" id="btnBack" aria-label="Back">←</button>
+      <div class="hud-mid">
+        <div id="stepLabel"></div>
+        <div id="chips"></div>
+      </div>
+      <button class="icon-btn" id="btnRecenter" aria-label="Recenter">◎</button>
+    </header>
+
+    <div id="reticle" hidden></div>
+
+    <div id="prompt" hidden>
+      <h3 id="promptTitle"></h3>
+      <p id="promptText"></p>
+      <button class="btn btn-small" id="btnSkip" hidden></button>
+    </div>
+
+    <div id="final" hidden>
+      <h2 data-t="cubeTitle"></h2>
+      <p class="muted" data-t="cubeHint"></p>
+      <a class="btn btn-primary" id="cta" target="_blank" rel="noopener"></a>
+      <button class="btn btn-ghost btn-small" id="btnRestart" data-t="restart"></button>
+    </div>
+
+    <div id="journeyBar" hidden>
+      <div>
+        <strong data-t="journeyTitle"></strong>
+        <small id="journeyPlace"></small>
+      </div>
+      <button class="btn btn-small btn-ghost" id="btnSound"></button>
+    </div>
+
+    <div id="toast"></div>
+  </div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
