@@ -6,14 +6,29 @@ export const LINKS = {
   official: 'https://www.mercedes-benz.hu/passengercars/models/grand-limousine/vle/overview.html',
 };
 
-export const JOURNEY = {
-  // Saját tárhelyen lévő equirectangular 360° MP4. Ha nincs meg, YouTube beágyazásra vált.
-  videoSrc: 'assets/video/journey360.mp4',
-  youtubeId: 'WDzd1gY9BfA',
-  // Hány fokkal forgassuk el a videógömböt, hogy a videó "előre" iránya a menetirányba essen.
-  yawOffsetDeg: 0,
-  place: { hu: 'La Marina', en: 'La Marina' },
-};
+// Választható 360° videók (equirectangular 2:1 MP4, a kép közepe = menetirány).
+// yawOffsetDeg: finomhangolás, ha a videó "előre" iránya nem a kép közepén van.
+// cabin: rajzoljunk-e VLE utastér-keretet (műszerfal, oszlopok) – ha a videóban már van utastér, nem kell.
+export const JOURNEYS = [
+  {
+    id: 'highway',
+    src: 'assets/video/journey360.mp4',
+    poster: 'assets/video/journey360.jpg',
+    yawOffsetDeg: 0,
+    cabin: false,
+    name: { hu: 'Esti autópálya', en: 'Evening highway' },
+    sub: { hu: 'Városi száguldás az utastérből', en: 'A city sprint from the cockpit' },
+  },
+  {
+    id: 'coast',
+    src: 'assets/video/journey360-2.mp4',
+    poster: 'assets/video/journey360-2.jpg',
+    yawOffsetDeg: 0,
+    cabin: true,
+    name: { hu: 'Tengerparti körút', en: 'Coastal drive' },
+    sub: { hu: 'Pálmafák és naplemente', en: 'Palm trees and sunset' },
+  },
+];
 
 export const PAINTS = [
   { id: 'black',  color: '#16181c', name: { hu: 'Obszidiánfekete metál', en: 'Obsidian Black metallic' } },
@@ -68,7 +83,9 @@ export const TEXT = {
     journeyTitle: 'Virtuális utazás',
     journeyHint: 'Nézz körül a telefonoddal',
     camFail: 'A kamera nem érhető el – virtuális háttérrel folytatjuk.',
-    ytFallback: 'Demo mód: YouTube lejátszó (a 360°-os MP4 nincs feltöltve)',
+    videoFail: 'A videó nem tölthető be.',
+    pickVideo: 'Válassz utat',
+    switchVideo: 'Másik út',
     yourVle: 'A te VLE-d',
     paint: 'Fényezés', wheel: 'Felni', interior: 'Belső tér',
   },
@@ -98,7 +115,9 @@ export const TEXT = {
     journeyTitle: 'Virtual journey',
     journeyHint: 'Look around with your phone',
     camFail: 'Camera unavailable – continuing with a virtual backdrop.',
-    ytFallback: 'Demo mode: YouTube player (360° MP4 not uploaded)',
+    videoFail: 'The video could not be loaded.',
+    pickVideo: 'Choose your ride',
+    switchVideo: 'Other ride',
     yourVle: 'Your VLE',
     paint: 'Paint', wheel: 'Wheels', interior: 'Interior',
   },

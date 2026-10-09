@@ -29,7 +29,7 @@ body.cam-off {
   background: radial-gradient(120% 80% at 50% 40%, #232a35 0%, #0b0d11 55%, #000 100%);
 }
 
-#cam, #gl, #yt {
+#cam, #gl {
   position: fixed;
   inset: 0;
   width: 100%;
@@ -39,7 +39,6 @@ body.cam-off {
 #cam { object-fit: cover; z-index: 0; opacity: 0; transition: opacity 0.8s; }
 body.cam-on #cam { opacity: 1; }
 #gl { z-index: 1; display: block; }
-#yt { z-index: 2; background: #000; }
 
 #ui {
   position: fixed;
@@ -227,7 +226,9 @@ h2 { font-weight: 300; font-size: 26px; margin: 0 0 12px; letter-spacing: 0.02em
   backdrop-filter: blur(16px);
   border: 1px solid var(--line);
 }
-#journeyBar div { display: flex; flex-direction: column; }
+#journeyBar > div:first-child { display: flex; flex-direction: column; min-width: 0; }
+#journeyBar .bar-btns { display: flex; gap: 6px; flex: none; }
+#journeyBar .btn-small { padding: 9px 12px; font-size: 13px; }
 #journeyBar small { color: var(--muted); font-size: 12px; }
 
 #toast {
@@ -244,3 +245,40 @@ h2 { font-weight: 300; font-size: 26px; margin: 0 0 12px; letter-spacing: 0.02em
   text-align: center;
 }
 #toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+/* ---------- videóválasztó ---------- */
+#videoList { display: flex; flex-direction: column; gap: 14px; width: 100%; max-width: 380px; }
+.video-card {
+  appearance: none;
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  padding: 0;
+  border-radius: 20px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background: #111 center / cover no-repeat;
+  color: #fff;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: transform 0.15s, border-color 0.2s;
+}
+.video-card:active { transform: scale(0.98); }
+.video-card:hover { border-color: rgba(255, 255, 255, 0.6); }
+.video-card span {
+  position: absolute; left: 0; right: 0; bottom: 0;
+  display: flex; flex-direction: column; gap: 2px;
+  padding: 28px 16px 14px;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.8));
+}
+.video-card strong { font-size: 18px; }
+.video-card small { color: var(--muted); font-size: 13px; }
+.video-card::after {
+  content: "360°";
+  position: absolute; top: 12px; right: 12px;
+  padding: 4px 9px; border-radius: 999px;
+  background: rgba(0, 0, 0, 0.55); border: 1px solid var(--line);
+  font-size: 12px;
+}

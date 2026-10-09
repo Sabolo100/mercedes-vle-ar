@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { PAINTS, WHEELS, INTERIORS, TEXT, LINKS, JOURNEY } from './config.js';
+import { PAINTS, WHEELS, INTERIORS, TEXT, LINKS, JOURNEYS } from './config.js';
 import {
   makeCardTexture, makeDotTexture,
   drawSide, drawFront, drawLounge, drawCockpit, drawWheelCard, drawSummary,
@@ -285,7 +285,7 @@ function applyI18n() {
   $('#cta').textContent = T().cta;
   $('#cta').href = LINKS.official;
   $('#btnSkip').textContent = T().skip;
-  $('#journeyPlace').textContent = JOURNEY.place[lang];
+  buildVideoList();
 }
 function setPrompt(title, text, { skip = false } = {}) {
   const p = $('#prompt');
@@ -329,7 +329,7 @@ const raycaster = new THREE.Raycaster();
 let down = null;
 canvas.addEventListener('pointerdown', (e) => {
   down = { x: e.clientX, y: e.clientY, lx: e.clientX, ly: e.clientY, drag: false };
-  if (journey && !journey.yt && journey.video.paused) journey.video.play().catch(() => {});
+  if (journey && journey.video.paused) journey.video.play().catch(() => {});
   canvas.setPointerCapture(e.pointerId);
 });
 canvas.addEventListener('pointermove', (e) => {
@@ -586,43 +586,58 @@ function updateCube(dt) {
 // OPCIÓ 2 – Virtuális utazás
 // ======================================================================
 let journey = null;
+let journeyIndex = 0;
 
-async function runJourney() {
+function buildVideoList() {
+  const list = $('#videoList');
+  list.innerHTML = '';
+  JOURNEYS.forEach((j, i) => {
+    const b = document.createElement('button');
+    b.className = 'video-card';
+    b.style.backgroundImage = `url("${j.poster}")`;
+    b.innerHTML = '<span><strong></strong><small></small></span>';
+    b.querySelector('strong').textContent = pick(j);
+    b.querySelector('small').textContent = j.sub[lang];
+    b.addEventListener('click', () => { show(null); look.recenter(); runJourney(i); });
+    list.append(b);
+  });
+}
+
+async function runJourney(index = 0) {
   const id = ++runId;
+  const cfg = JOURNEYS[index];
+  journeyIndex = index;
   $('#hud').hidden = false;
   $('#reticle').hidden = true;
   $('#journeyBar').hidden = false;
+  $('#journeyPlace').textContent = pick(cfg);
+  $('#btnSwitch').hidden = JOURNEYS.length < 2;
   setStep(0);
   $('#chips').innerHTML = '';
   setPrompt(T().journeyTitle, T().journeyHint);
   setTimeout(() => { if (id === runId) setPrompt(null); }, 3500);
 
   const video = document.createElement('video');
-  const src = new URLSearchParams(location.search).get('video') || JOURNEY.videoSrc; // ?video=… teszthez
-  Object.assign(video, { src, loop: true, muted: true, playsInline: true, crossOrigin: 'anonymous', preload: 'auto' });
+  const src = new URLSearchParams(location.search).get('video') || cfg.src; // ?video=… teszthez
+  Object.assign(video, { crossOrigin: 'anonymous', loop: true, muted: true, playsInline: true, preload: 'auto' });
   video.setAttribute('playsinline', '');
   video.setAttribute('webkit-playsinline', '');
-  // Tartalék csak akkor, ha a fájl nem tölthető be (a lejátszást a böngésző néha csak koppintásra engedi)
+  // DOM-ban tartjuk (láthatatlanul) – egyes mobilböngészők különben nem dekódolják a képkockákat
+  video.style.cssText = 'position:fixed;width:1px;height:1px;opacity:0;pointer-events:none;';
+  document.body.append(video);
+  video.src = src;
+  // a lejátszást a böngésző néha csak koppintásra engedi – ezért a betöltést figyeljük, nem a play()-t
   const ok = await new Promise((res) => {
     video.addEventListener('loadedmetadata', () => res(true), { once: true });
     video.addEventListener('error', () => res(false), { once: true });
   });
   video.play().catch((e) => console.warn('360 video:', e.message));
-  if (id !== runId) { video.pause(); return; }
+  if (id !== runId) { video.pause(); video.remove(); return; }
+  if (!ok) { video.remove(); toast(T().videoFail, 5000); return; }
 
-  journey = { video, group: new THREE.Group(), yt: !ok };
+  journey = { video, group: new THREE.Group() };
   scene.add(journey.group);
   updateSoundBtn();
-
-  if (!ok) {
-    // Tartalék: YouTube 360° lejátszó (amíg a saját MP4 nincs feltöltve)
-    const yt = $('#yt');
-    const q = new URLSearchParams({ autoplay: 1, mute: 1, playsinline: 1, loop: 1, playlist: JOURNEY.youtubeId, controls: 0, rel: 0, modestbranding: 1 });
-    yt.src = `https://www.youtube.com/embed/${JOURNEY.youtubeId}?${q}`;
-    yt.hidden = false;
-    toast(T().ytFallback, 5000);
-    return;
-  }
 
   // 360° gömb – a videót belülről nézzük
   const vt = new THREE.VideoTexture(video);
@@ -630,13 +645,15 @@ async function runJourney() {
   const geo = new THREE.SphereGeometry(50, 64, 40);
   geo.scale(-1, 1, 1);
   const sphere = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ map: vt, transparent: true, opacity: 0, depthWrite: false }));
-  sphere.rotation.y = THREE.MathUtils.degToRad(JOURNEY.yawOffsetDeg);
+  // SphereGeometry-n a textúra közepe a −X irányba esik → −90° fordítással kerül előre (−Z)
+  sphere.rotation.y = THREE.MathUtils.degToRad(-90 + cfg.yawOffsetDeg);
   sphere.renderOrder = -1;
   journey.group.add(sphere);
 
-  const cabin = buildCabin();
+  const cabin = cfg.cabin ? buildCabin() : new THREE.Group();
   journey.group.add(cabin);
   journey.group.rotation.y = look.yaw(); // a menetirány oda essen, amerre most néz
+  dust.visible = false;
 
   // "portál" belépés: a gömb kívülről összehúzódik ránk, közben előtűnik
   sphere.scale.setScalar(4);
@@ -647,6 +664,13 @@ async function runJourney() {
   }, { e: ease.inOutCubic });
   if (id === runId) { sphere.material.transparent = false; sphere.material.needsUpdate = true; }
 }
+
+$('#btnSwitch').addEventListener('click', () => {
+  const next = (journeyIndex + 1) % JOURNEYS.length;
+  resetAll();
+  look.recenter();
+  runJourney(next);
+});
 
 /** Egyszerű utastér-keret (műszerfal, oszlopok, tető), hogy a szélvédőn át "nézzünk ki". */
 function buildCabin() {
@@ -686,13 +710,10 @@ function buildCabin() {
 }
 
 function updateSoundBtn() {
-  const b = $('#btnSound');
-  const muted = journey ? (journey.yt ? true : journey.video.muted) : true;
-  b.textContent = muted ? T().sound : T().soundOff;
-  b.hidden = journey?.yt; // YouTube tartalékban a lejátszó saját kezelője
+  $('#btnSound').textContent = !journey || journey.video.muted ? T().sound : T().soundOff;
 }
 $('#btnSound').addEventListener('click', () => {
-  if (!journey || journey.yt) return;
+  if (!journey) return;
   journey.video.muted = !journey.video.muted;
   journey.video.play();
   updateSoundBtn();
@@ -705,7 +726,8 @@ function stopJourney() {
   journey.video.load();
   journey.group.traverse((o) => { o.geometry?.dispose(); o.material?.map?.dispose(); o.material?.dispose(); });
   scene.remove(journey.group);
-  const yt = $('#yt'); yt.src = 'about:blank'; yt.hidden = true;
+  journey.video.remove();
+  dust.visible = true;
   journey = null;
 }
 
@@ -751,10 +773,16 @@ document.querySelectorAll('[data-mode]').forEach((b) => b.addEventListener('clic
   show(null);
   look.recenter();
   if (b.dataset.mode === 'config') runConfigurator();
-  else runJourney();
+  else if (JOURNEYS.length > 1) show('#videos');
+  else runJourney(0);
 }));
 
-$('#btnBack').addEventListener('click', () => { resetAll(); show('#modes'); });
+$('#btnBack').addEventListener('click', () => {
+  const wasJourney = !!journey || !$('#journeyBar').hidden;
+  resetAll();
+  show(wasJourney && JOURNEYS.length > 1 ? '#videos' : '#modes');
+});
+$('#btnVideosBack').addEventListener('click', () => show('#modes'));
 $('#btnRestart').addEventListener('click', () => { resetAll(); show(null); look.recenter(); runConfigurator(); });
 $('#btnRecenter').addEventListener('click', () => {
   look.recenter();
@@ -784,5 +812,5 @@ if (qs.get('lang')) {
   look.connect();
   if (qs.get('cam') !== '0') startCamera(); else document.body.classList.add('cam-off');
   show('#modes');
-  if (qs.get('mode')) { show(null); (qs.get('mode') === 'journey' ? runJourney : runConfigurator)(); }
+  if (qs.get('mode')) { show(null); qs.get('mode') === 'journey' ? runJourney(Number(qs.get('v')) || 0) : runConfigurator(); }
 }

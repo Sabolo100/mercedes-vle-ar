@@ -13,7 +13,6 @@
 <body>
   <video id="cam" playsinline muted autoplay></video>
   <canvas id="gl"></canvas>
-  <iframe id="yt" hidden allow="autoplay; encrypted-media; gyroscope; accelerometer; fullscreen" allowfullscreen></iframe>
 
   <div id="ui">
     <!-- 1. Nyelvválasztó (ez a tap kéri el a kamera- és mozgásérzékelő-engedélyt) -->
@@ -41,6 +40,13 @@
         <span class="mode-icon">AR</span>
         <span class="mode-text"><strong data-t="modeConfig"></strong><small data-t="modeConfigSub"></small></span>
       </button>
+    </section>
+
+    <!-- 3. Videóválasztó (virtuális utazás) -->
+    <section id="videos" class="screen">
+      <h2 data-t="pickVideo"></h2>
+      <div id="videoList"></div>
+      <button class="btn btn-ghost btn-small" id="btnVideosBack" data-t="back"></button>
     </section>
 
     <!-- Élmény közbeni felület -->
@@ -73,7 +79,10 @@
         <strong data-t="journeyTitle"></strong>
         <small id="journeyPlace"></small>
       </div>
-      <button class="btn btn-small btn-ghost" id="btnSound"></button>
+      <div class="bar-btns">
+        <button class="btn btn-small btn-ghost" id="btnSwitch" data-t="switchVideo"></button>
+        <button class="btn btn-small btn-ghost" id="btnSound"></button>
+      </div>
     </div>
 
     <div id="toast"></div>
